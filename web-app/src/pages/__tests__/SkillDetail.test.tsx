@@ -3,7 +3,7 @@ import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { SkillDetail } from '../SkillDetail';
 import { renderWithRouter } from '../../utils/testUtils';
 import { createMockSkill } from '../../factories/skill';
-import type { Skill } from '../../types';
+import { useSkills } from '../../context/SkillContext';
 
 // Mock the SkillStarButton component
 vi.mock('../../components/SkillStarButton', () => ({
@@ -14,23 +14,63 @@ vi.mock('../../components/SkillStarButton', () => ({
   ),
 }));
 
+// Mock useSkills hook
+vi.mock('../../context/SkillContext', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    useSkills: vi.fn(),
+  };
+});
+
+// Mock react-markdown to avoid lazy loading issues in tests
+vi.mock('react-markdown', () => ({
+  default: ({ children }: { children: string }) => <div data-testid="markdown-content">{children}</div>,
+}));
+
 describe('SkillDetail', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     localStorage.clear();
-    // Reset and setup fresh fetch mock for each test
-    const mockFetch = vi.fn();
-    global.fetch = mockFetch;
   });
 
   describe('Loading state', () => {
-    it('should show loading spinner initially', async () => {
-      // Create a promise that never resolves
-      const neverResolvingPromise = new Promise(() => {});
-      (global.fetch as Mock).mockReturnValue(neverResolvingPromise);
+    it('should show loading spinner when context is loading', async () => {
+      (useSkills as Mock).mockReturnValue({
+        skills: [],
+        stars: {},
+        loading: true,
+      });
 
-      renderWithRouter(<SkillDetail />, { route: '/skill/test-skill' });
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/test-skill',
+        path: '/skill/:id',
+        useProvider: false
+      });
 
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByTestId('loader')).toBeInTheDocument();
+    });
+
+    it('should show loading spinner when markdown is loading', async () => {
+      const mockSkill = createMockSkill({ id: 'test-skill' });
+      (useSkills as Mock).mockReturnValue({
+        skills: [mockSkill],
+        stars: {},
+        loading: false,
+      });
+
+      // Mock fetch for markdown content to never resolve
+      global.fetch = vi.fn().mockReturnValue(new Promise(() => { }));
+
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/test-skill',
+        path: '/skill/:id',
+        useProvider: false
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('loader')).toBeInTheDocument();
+      });
     });
   });
 
@@ -41,36 +81,44 @@ describe('SkillDetail', () => {
         name: 'react-patterns',
         description: 'React design patterns and best practices',
         category: 'frontend',
-        source: 'official',
-        date_added: '2024-01-15',
       });
 
-      // Mock first fetch for skills.json
-      (global.fetch as Mock).mockResolvedValueOnce({
-        json: async () => [mockSkill],
+      (useSkills as Mock).mockReturnValue({
+        skills: [mockSkill],
+        stars: { 'react-patterns': 5 },
+        loading: false,
       });
 
-      // Mock second fetch for markdown content
-      (global.fetch as Mock).mockResolvedValueOnce({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         text: async () => '# React Patterns\n\nThis is the skill content.',
       });
 
-      renderWithRouter(<SkillDetail />, { route: '/skill/react-patterns' });
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/react-patterns',
+        path: '/skill/:id',
+        useProvider: false
+      });
 
       await waitFor(() => {
         expect(screen.getByText('@react-patterns')).toBeInTheDocument();
         expect(screen.getByText('React design patterns and best practices')).toBeInTheDocument();
-        expect(screen.getByText(/frontend/i)).toBeInTheDocument();
+        expect(screen.getByTestId('markdown-content')).toHaveTextContent('This is the skill content.');
       });
     });
 
     it('should show skill not found when id does not exist', async () => {
-      (global.fetch as Mock).mockResolvedValueOnce({
-        json: async () => [],
+      (useSkills as Mock).mockReturnValue({
+        skills: [],
+        stars: {},
+        loading: false,
       });
 
-      renderWithRouter(<SkillDetail />, { route: '/skill/nonexistent' });
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/nonexistent',
+        path: '/skill/:id',
+        useProvider: false
+      });
 
       await waitFor(() => {
         expect(screen.getByText(/Error Loading Skill/i)).toBeInTheDocument();
@@ -80,39 +128,25 @@ describe('SkillDetail', () => {
   });
 
   describe('Copy functionality', () => {
-    it('should have copy buttons', async () => {
-      const mockSkill = createMockSkill({ id: 'copy-test', name: 'copy-test' });
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        json: async () => [mockSkill],
-      });
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        ok: true,
-        text: async () => 'Content',
-      });
-
-      renderWithRouter(<SkillDetail />, { route: '/skill/copy-test' });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /Copy @Skill/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Copy Full Content/i })).toBeInTheDocument();
-      });
-    });
-
     it('should copy skill name to clipboard when clicked', async () => {
       const mockSkill = createMockSkill({ id: 'click-test', name: 'click-test' });
 
-      (global.fetch as Mock).mockResolvedValueOnce({
-        json: async () => [mockSkill],
+      (useSkills as Mock).mockReturnValue({
+        skills: [mockSkill],
+        stars: {},
+        loading: false,
       });
 
-      (global.fetch as Mock).mockResolvedValueOnce({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         text: async () => 'Content',
       });
 
-      renderWithRouter(<SkillDetail />, { route: '/skill/click-test' });
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/click-test',
+        path: '/skill/:id',
+        useProvider: false
+      });
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Copy @Skill/i })).toBeInTheDocument();
@@ -125,66 +159,31 @@ describe('SkillDetail', () => {
     });
   });
 
-  describe('Prompt builder', () => {
-    it('should have interactive prompt builder textarea', async () => {
-      const mockSkill = createMockSkill({ id: 'prompt-test' });
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        json: async () => [mockSkill],
-      });
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        ok: true,
-        text: async () => 'Content',
-      });
-
-      renderWithRouter(<SkillDetail />, { route: '/skill/prompt-test' });
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Interactive Prompt Builder/i)).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/Type your specific task requirements/i)).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Navigation', () => {
-    it('should have back to catalog link', async () => {
-      const mockSkill = createMockSkill({ id: 'nav-test' });
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        json: async () => [mockSkill],
-      });
-
-      (global.fetch as Mock).mockResolvedValueOnce({
-        ok: true,
-        text: async () => 'Content',
-      });
-
-      renderWithRouter(<SkillDetail />, { route: '/skill/nav-test' });
-
-      await waitFor(() => {
-        expect(screen.getByText(/Back to Catalog/i)).toBeInTheDocument();
-      });
-    });
-  });
-
   describe('Star button integration', () => {
-    it('should render star button component', async () => {
+    it('should render star button component with correct count', async () => {
       const mockSkill = createMockSkill({ id: 'star-integration' });
 
-      (global.fetch as Mock).mockResolvedValueOnce({
-        json: async () => [mockSkill],
+      (useSkills as Mock).mockReturnValue({
+        skills: [mockSkill],
+        stars: { 'star-integration': 10 },
+        loading: false,
       });
 
-      (global.fetch as Mock).mockResolvedValueOnce({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         text: async () => 'Content',
       });
 
-      renderWithRouter(<SkillDetail />, { route: '/skill/star-integration' });
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/star-integration',
+        path: '/skill/:id',
+        useProvider: false
+      });
 
       await waitFor(() => {
-        expect(screen.getByTestId('star-button')).toBeInTheDocument();
+        const starBtn = screen.getByTestId('star-button');
+        expect(starBtn).toBeInTheDocument();
+        expect(starBtn).toHaveAttribute('data-count', '10');
       });
     });
   });

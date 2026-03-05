@@ -200,6 +200,16 @@
     "date_added": "2026-02-27"
   },
   {
+    "id": "agentmail",
+    "path": "skills/agentmail",
+    "category": "uncategorized",
+    "name": "agentmail",
+    "description": "Email infrastructure for AI agents. Create accounts, send/receive emails, manage webhooks, and check karma balance via the AgentMail API.",
+    "risk": "safe",
+    "source": "community",
+    "date_added": null
+  },
+  {
     "id": "agents-v2-py",
     "path": "skills/agents-v2-py",
     "category": "uncategorized",
@@ -4760,6 +4770,16 @@
     "date_added": "2026-02-27"
   },
   {
+    "id": "gemini-api-integration",
+    "path": "skills/gemini-api-integration",
+    "category": "uncategorized",
+    "name": "gemini-api-integration",
+    "description": "Use when integrating Google Gemini API into projects. Covers model selection, multimodal inputs, streaming, function calling, and production best practices.",
+    "risk": "safe",
+    "source": "community",
+    "date_added": "2026-03-04"
+  },
+  {
     "id": "geo-fundamentals",
     "path": "skills/geo-fundamentals",
     "category": "uncategorized",
@@ -5750,6 +5770,36 @@
     "date_added": "2026-02-27"
   },
   {
+    "id": "lightning-architecture-review",
+    "path": "skills/lightning-architecture-review",
+    "category": "uncategorized",
+    "name": "lightning-architecture-review",
+    "description": "Review Bitcoin Lightning Network protocol designs, compare channel factory approaches, and analyze Layer 2 scaling tradeoffs. Covers trust models, on-chain footprint, consensus requirements, HTLC/PTLC compatibility, liveness, and watchtower support.",
+    "risk": "unknown",
+    "source": "community",
+    "date_added": "2026-03-03"
+  },
+  {
+    "id": "lightning-channel-factories",
+    "path": "skills/lightning-channel-factories",
+    "category": "uncategorized",
+    "name": "lightning-channel-factories",
+    "description": "Technical reference on Lightning Network channel factories, multi-party channels, LSP architectures, and Bitcoin Layer 2 scaling without soft forks. Covers Decker-Wattenhofer, timeout trees, MuSig2 key aggregation, HTLC/PTLC forwarding, and watchtower breach detection.",
+    "risk": "unknown",
+    "source": "community",
+    "date_added": "2026-03-03"
+  },
+  {
+    "id": "lightning-factory-explainer",
+    "path": "skills/lightning-factory-explainer",
+    "category": "uncategorized",
+    "name": "lightning-factory-explainer",
+    "description": "Explain Bitcoin Lightning channel factories and the SuperScalar protocol \u2014 scalable Lightning onboarding using shared UTXOs, Decker-Wattenhofer trees, timeout-signature trees, MuSig2, and Taproot. No soft fork required.",
+    "risk": "unknown",
+    "source": "community",
+    "date_added": "2026-03-03"
+  },
+  {
     "id": "linear-automation",
     "path": "skills/linear-automation",
     "category": "uncategorized",
@@ -5888,6 +5938,16 @@
     "risk": "unknown",
     "source": "community",
     "date_added": "2026-02-27"
+  },
+  {
+    "id": "llm-prompt-optimizer",
+    "path": "skills/llm-prompt-optimizer",
+    "category": "uncategorized",
+    "name": "llm-prompt-optimizer",
+    "description": "Use when improving prompts for any LLM. Applies proven prompt engineering techniques to boost output quality, reduce hallucinations, and cut token usage.",
+    "risk": "safe",
+    "source": "community",
+    "date_added": "2026-03-04"
   },
   {
     "id": "local-legal-seo-audit",
@@ -7110,6 +7170,16 @@
     "date_added": "2026-02-27"
   },
   {
+    "id": "professional-proofreader",
+    "path": "skills/professional-proofreader",
+    "category": "uncategorized",
+    "name": "professional-proofreader",
+    "description": "Use when a user asks to \"proofread\", \"review and correct\", \"fix grammar\", \"improve readability while keeping my voice\", and to proofread a document file and save an updated version.\n",
+    "risk": "safe",
+    "source": "original",
+    "date_added": "2026-03-04"
+  },
+  {
     "id": "programmatic-seo",
     "path": "skills/programmatic-seo",
     "category": "uncategorized",
@@ -7608,6 +7678,16 @@
     "risk": "unknown",
     "source": "community",
     "date_added": "2026-02-27"
+  },
+  {
+    "id": "saas-mvp-launcher",
+    "path": "skills/saas-mvp-launcher",
+    "category": "uncategorized",
+    "name": "saas-mvp-launcher",
+    "description": "Use when planning or building a SaaS MVP from scratch. Provides a structured roadmap covering tech stack, architecture, auth, payments, and launch checklist.",
+    "risk": "safe",
+    "source": "community",
+    "date_added": "2026-03-04"
   },
   {
     "id": "saga-orchestration",
@@ -8168,6 +8248,16 @@
     "risk": "safe",
     "source": "https://github.com/robzolkos/skill-rails-upgrade",
     "date_added": "2026-02-27"
+  },
+  {
+    "id": "skill-router",
+    "path": "skills/skill-router",
+    "category": "uncategorized",
+    "name": "skill-router",
+    "description": "Use when the user is unsure which skill to use or where to start. Interviews the user with targeted questions and recommends the best skill(s) from the installed library for their goal.",
+    "risk": "safe",
+    "source": "self",
+    "date_added": null
   },
   {
     "id": "skill-seekers",
@@ -9188,6 +9278,16 @@
     "risk": "safe",
     "source": "original",
     "date_added": "2026-02-28"
+  },
+  {
+    "id": "videodb",
+    "path": "skills/videodb",
+    "category": "media",
+    "name": "videodb",
+    "description": "Video and audio perception, indexing, and editing. Ingest files/URLs/live streams, build visual/spoken indexes, search with timestamps, edit timelines, add overlays/subtitles, generate media, and create real-time alerts.",
+    "risk": "safe",
+    "source": "community",
+    "date_added": "2026-02-27"
   },
   {
     "id": "videodb-skills",

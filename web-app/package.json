@@ -13,15 +13,18 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
+    "@types/lodash.debounce": "^4.0.9",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.2",
     "github-markdown-css": "^5.9.0",
     "highlight.js": "^11.11.1",
+    "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.574.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.0",
+    "react-virtuoso": "^4.18.3",
     "rehype-highlight": "^7.0.2",
     "tailwind-merge": "^3.5.0"
   },
