@@ -2,10 +2,16 @@
 
 - Fixed issue `#344` by correcting `.claude-plugin/marketplace.json` so the marketplace plugin entry uses `source: "./"` instead of `"."`, matching Claude Code's relative-path schema requirement for marketplace entries.
 - Added `tools/scripts/tests/claude_plugin_marketplace.test.js` and wired it into the local test suite so invalid marketplace `source` paths fail fast in CI/maintainer verification.
-- Merged PRs `#333`, `#336`, `#338`, `#343`, `#340`, and `#334` via GitHub squash merge after maintainer refresh of forked workflows and PR metadata.
+- Merged PRs `#333`, `#336`, `#338`, `#343`, `#340`, `#334`, and `#345` via GitHub squash merge after maintainer refresh of forked workflows and PR metadata.
 - Closed PR `#337` and PR `#342` as superseded by `#338`, then closed issue `#339` manually after confirming the accepted fix path; issue `#335` auto-closed from the merged PR body.
-- Left issue `#344` open with a triage comment, and left PR `#341` open with a blocking review comment because the submitted skill content is corrupted even though CI is green.
+- Closed issue `#344` with a follow-up comment after shipping the plugin marketplace fix on `main`, and left PR `#341` open with a blocking review comment because the submitted skill content is corrupted even though CI is green.
 - Documented a new maintainer edge case in `.github/MAINTENANCE.md`: forked runs in `action_required`, `pr-policy` failures caused by stale PR bodies, the REST API fallback when `gh pr edit` fails with the Projects Classic GraphQL error, and the need to `close`/`reopen` a PR when a plain rerun does not pick up updated metadata.
+- Refreshed the release-facing docs for `8.2.0` across `README.md`, `docs/users/getting-started.md`, `docs/users/walkthrough.md`, and `CHANGELOG.md`.
+- Published release `v8.2.0` on `main` with:
+  - `npm run release:preflight`
+  - `npm run security:docs`
+  - `npm run release:prepare -- 8.2.0`
+  - `npm run release:publish -- 8.2.0`
 
 # Maintenance Walkthrough - 2026-03-17
 

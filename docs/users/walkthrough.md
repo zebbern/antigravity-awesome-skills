@@ -2,7 +2,7 @@
 
 ## Overview
 
-This walkthrough captures the maintainer-side documentation and release preparation work for **v8.2.0** after the 2026-03-18 maintenance sweep.
+This walkthrough captures the maintainer-side documentation and release publication work for **v8.2.0** after the 2026-03-18 maintenance sweep.
 
 ## Changes Verified
 
@@ -31,7 +31,8 @@ This walkthrough captures the maintainer-side documentation and release preparat
 
 - **Issue #344**: Corrected `.claude-plugin/marketplace.json` to use `source: "./"` and added a regression test for the Claude Code marketplace entry
 - **.github/MAINTENANCE.md**: Documented the maintainer flow for fork-gated workflows and stale PR metadata
-### 4. Release protocol to run
+
+### 4. Release protocol executed
 
 - `npm run release:preflight`
 - `npm run security:docs`
@@ -42,4 +43,4 @@ This walkthrough captures the maintainer-side documentation and release preparat
 ## Expected Outcome
 
 - Documentation, changelog, and generated metadata all agree on the release state.
-- The repository is ready for the `v8.2.0` tag and GitHub release.
+- The repository published the `v8.2.0` tag and GitHub release successfully.
