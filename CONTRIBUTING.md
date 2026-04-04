@@ -23,11 +23,20 @@ cp docs/contributors/skill-template.md skills/my-awesome-skill/SKILL.md
 # 5. Edit and validate
 npm run validate
 
+# For SKILL.md with shell/network/credential/mutation guidance:
+npm run security:docs
+
 # 6. Open a PR
 git add skills/my-awesome-skill/
 git commit -m "feat: add my-awesome-skill for [purpose]"
 git push origin my-branch
 ```
+
+Open the PR with the default template and enable **Allow edits from maintainers** so conflicts can be resolved without extra back-and-forth.
+If your PR adds or edits `SKILL.md`, GitHub will also run the automated `skill-review` workflow on the pull request.
+Community PRs should stay **source-only**: do not include generated registry artifacts such as `CATALOG.md`, `skills_index.json`, or `data/*.json`.
+
+Automated validation is necessary, but it does **not** replace manual logic review. If your PR adds or changes a skill, or introduces command, network, credential, mutation, install, or security guidance, review the logic and failure modes manually even when every automated check passes.
 
 If you only want to improve docs, editing directly in GitHub is still perfectly fine.
 
@@ -44,9 +53,9 @@ You don't need to be an expert! Here are ways anyone can help:
 - Translate documentation to other languages
 
 ### 2. Report Issues
-- Found something confusing? Tell us!
-- Skill not working? Let us know!
-- Have suggestions? We want to hear them!
+- Found a reproducible bug? Open an Issue.
+- Need help, want feedback, or have an early-stage idea? Start a Discussion.
+- Skill not working? If you can reproduce it, open an Issue. If you're unsure, start in Q&A.
 
 ### 3. Create New Skills
 - Share your expertise as a skill
@@ -205,8 +214,10 @@ More examples...
 
 1. **Copy it to your AI tool's skills directory:**
    ```bash
-   cp -r skills/my-awesome-skill ~/.agent/skills/
+   cp -r skills/my-awesome-skill ~/.gemini/antigravity/skills/
    ```
+
+   Or copy it into the specific tool path you are testing against, such as `~/.claude/skills/`, `~/.cursor/skills/`, or a custom workspace path like `.agent/skills/`.
 
 2. **Try using it:**
    ```
@@ -219,11 +230,39 @@ More examples...
 
 Recommended validation path:
 
+For a **skill-only PR**:
+
+```bash
+npm install
+npm run validate
+```
+
+GitHub will also run the automated `skill-review` check for PRs that touch `SKILL.md`.
+
+Passing `npm run validate` or `skill-review` is not enough on its own for skill changes. Before you open the PR, manually review the skill for:
+
+- trigger clarity and whether the skill would fire in the right situations,
+- correctness of the instructions and examples,
+- obvious failure modes, unsafe assumptions, and user-facing edge cases,
+- whether the declared `risk:` level still matches the actual behavior.
+
+Submitting `risk: unknown` is still acceptable for genuinely legacy or not-yet-classified content. Maintainers may later use `npm run audit:skills` and `npm run sync:risk-labels` to reconcile high-confidence legacy labels without asking contributors to regenerate catalog artifacts in their PRs.
+
+For **docs / workflows / infra changes**:
+
 ```bash
 npm install
 npm run validate
 npm run validate:references
 npm test
+```
+
+For **any normal community PR**, keep the branch source-only and leave generated registry artifacts out of the diff. `main` canonicalizes those after merge.
+
+Optional maintainer-style preflight:
+
+```bash
+npm run pr:preflight
 ```
 
 Python-only fallback:
@@ -238,6 +277,43 @@ This checks:
 - ✅ Name matches folder name
 - ✅ Description exists
 - ✅ Reference data and docs bundles stay coherent
+
+Do **not** commit generated registry artifacts in a normal PR. These files are canonicalized on `main` after merge:
+
+- `CATALOG.md`
+- `skills_index.json`
+- `data/skills_index.json`
+- `data/catalog.json`
+- `data/bundles.json`
+- `data/aliases.json`
+
+### Security-Sensitive Review (New Skills)
+
+If your skill contains:
+
+- shell commands or command-like examples (`curl`, `wget`, `bash`, `powershell`, `irm`, etc.),
+- network instructions or credential/token examples,
+- direct file-system, process, or mutation guidance,
+
+add one extra preflight pass:
+
+```bash
+npm run security:docs
+npm test
+```
+
+Expected outcome:
+
+- ✅ no blocked high-risk examples unless justified,
+- ✅ explicit allowlist comments for any deliberate high-risk documentation command patterns
+  (`<!-- security-allowlist: ... -->`),
+- ✅ an explicit note in the PR description if examples are intentionally risky and the intended usage requires local admin/hosted environments.
+
+For offensive or destructive-capability skills, also verify:
+
+- `risk:` is set to `offensive` or `critical` as appropriate,
+- any user confirmation and authorization preconditions are explicit in the instructions,
+- the standard "Authorized Use Only" disclaimer is present in the skill when relevant.
 
 Optional hardening pass:
 
@@ -386,8 +462,12 @@ Before submitting your contribution:
 - [ ] I've included examples
 - [ ] I've tested the skill with an AI assistant
 - [ ] I've run `npm run validate`
-- [ ] I've run `npm run validate:references` and `npm test` when my change affects docs, bundles, workflows, or generated artifacts
+- [ ] If I changed `SKILL.md` or risky guidance, I manually reviewed the logic, safety, and likely failure modes instead of relying on automated checks alone
+- [ ] I've run `npm run validate:references` and `npm test` when my change affects docs, workflows, or infrastructure
+- [ ] I ran the docs security scan (`npm run security:docs`) for any skill containing commands, network access, credentials, or destructive guidance
+- [ ] I did **not** include generated registry artifacts (`CATALOG.md`, `skills_index.json`, `data/*.json`) in this PR
 - [ ] My commit message is clear (e.g., "feat: add docker-compose skill")
+- [ ] I enabled **Allow edits from maintainers** on the PR
 - [ ] I've checked for typos and grammar
 
 ---

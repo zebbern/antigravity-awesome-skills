@@ -45,6 +45,8 @@ The frontmatter is at the very top, wrapped in `---`:
 ---
 name: my-skill-name
 description: "Brief description of what this skill does"
+risk: safe
+source: community
 ---
 ```
 
@@ -59,8 +61,25 @@ description: "Brief description of what this skill does"
 #### `description`
 - **What it is:** One-sentence summary
 - **Format:** String in quotes
-- **Length:** Keep it under 150 characters
+- **Length:** Keep it under 200 characters
 - **Example:** `"Stripe payment integration patterns including checkout, subscriptions, and webhooks"`
+
+#### `risk`
+- **What it is:** The safety classification of the skill
+- **Values:** `none` | `safe` | `critical` | `offensive` | `unknown`
+- **Example:** `risk: safe`
+- **Guide:**
+  - `none` — pure text/reasoning, no commands or mutations
+  - `safe` — reads files, runs non-destructive commands
+  - `critical` — modifies state, deletes files, pushes to production
+  - `offensive` — pentesting/red-team tools; **must** include "Authorized Use Only" warning
+  - `unknown` — legacy or unclassified; prefer a concrete level for new skills
+
+#### `source`
+- **What it is:** Attribution for the skill's origin
+- **Format:** URL or a short label
+- **Examples:** `source: community`, `source: "https://example.com/original"`
+- **Use `"self"`** if you are the original author
 
 ### Optional Fields
 
@@ -70,9 +89,11 @@ Some skills include additional metadata:
 ---
 name: my-skill-name
 description: "Brief description"
-version: "1.0.0"
-author: "Your Name"
+risk: safe
+source: community
+author: "your-name-or-handle"
 tags: ["react", "typescript", "testing"]
+tools: [claude, cursor, gemini]
 ---
 ```
 
@@ -124,19 +145,19 @@ More instructions...
 **This is the heart of your skill** - clear, actionable steps
 
 #### 5. Examples
-```markdown
+````markdown
 ## Examples
 
 ### Example 1: [Use Case]
-\`\`\`javascript
+```javascript
 // Example code
-\`\`\`
+```
 
 ### Example 2: [Another Use Case]
-\`\`\`javascript
+```javascript
 // More code
-\`\`\`
 ```
+````
 
 **Why examples matter:** They show the AI exactly what good output looks like
 
@@ -158,7 +179,26 @@ More instructions...
   **Solution:** How to fix it
 ```
 
-#### 8. Related Skills
+#### 8. Security & Safety Notes (for command/network/offensive skills)
+
+If your skill includes:
+
+- shell commands or command-like examples,
+- remote fetch/install or token usage guidance,
+- file mutation, destructive actions, or privileged operations,
+
+add a dedicated section before final wrap-up:
+
+```markdown
+## Security & Safety Notes
+
+- This is safe/unsafe scope
+- Required confirmation or authorization
+- Example allowlist notes (if needed):
+  `<!-- security-allowlist: ... -->`
+```
+
+#### 9. Related Skills
 ```markdown
 ## Related Skills
 
@@ -224,12 +264,12 @@ scripts/
 ```
 
 **Reference them in SKILL.md:**
-```markdown
+````markdown
 Run the setup script:
-\`\`\`bash
+```bash
 bash scripts/setup.sh
-\`\`\`
 ```
+````
 
 ### Examples Directory
 
@@ -256,12 +296,12 @@ templates/
 ```
 
 **Reference in SKILL.md:**
-```markdown
+````markdown
 Use this template as a starting point:
-\`\`\`typescript
+```typescript
 {{#include templates/component.tsx}}
-\`\`\`
 ```
+````
 
 ### References Directory
 
@@ -304,11 +344,11 @@ references/
 
 #### Code Blocks
 Always specify the language:
-```markdown
-\`\`\`javascript
+````markdown
+```javascript
 const example = "code";
-\`\`\`
 ```
+````
 
 #### Lists
 Use consistent formatting:

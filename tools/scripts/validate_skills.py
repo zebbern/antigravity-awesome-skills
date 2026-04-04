@@ -4,6 +4,8 @@ import argparse
 import sys
 import io
 import yaml
+from collections.abc import Mapping
+from datetime import date, datetime
 from _project_paths import find_repo_root
 
 
@@ -37,12 +39,21 @@ WHEN_TO_USE_PATTERNS = [
 def has_when_to_use_section(content):
     return any(pattern.search(content) for pattern in WHEN_TO_USE_PATTERNS)
 
+def normalize_yaml_value(value):
+    if isinstance(value, Mapping):
+        return {key: normalize_yaml_value(val) for key, val in value.items()}
+    if isinstance(value, list):
+        return [normalize_yaml_value(item) for item in value]
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return value
+
 def parse_frontmatter(content, rel_path=None):
     """
     Parse frontmatter using PyYAML for robustness.
     Returns a dict of key-values and a list of error messages.
     """
-    fm_match = re.search(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+    fm_match = re.search(r'^---\s*\n(.*?)\n?---(?:\s*\n|$)', content, re.DOTALL)
     if not fm_match:
         return None, ["Missing or malformed YAML frontmatter"]
     
@@ -50,6 +61,9 @@ def parse_frontmatter(content, rel_path=None):
     fm_errors = []
     try:
         metadata = yaml.safe_load(fm_text) or {}
+        metadata = normalize_yaml_value(metadata)
+        if not isinstance(metadata, Mapping):
+            return None, ["Frontmatter must be a YAML mapping/object."]
         
         # Identification of the specific regression issue for better reporting
         if "description" in metadata:
@@ -59,20 +73,15 @@ def parse_frontmatter(content, rel_path=None):
             elif desc == "|":
                 fm_errors.append("description contains only the YAML block indicator '|', likely due to a parsing regression.")
         
-        return metadata, fm_errors
+        return dict(metadata), fm_errors
     except yaml.YAMLError as e:
         return None, [f"YAML Syntax Error: {e}"]
 
-def validate_skills(skills_dir, strict_mode=False):
-    configure_utf8_output()
-
-    print(f"🔍 Validating skills in: {skills_dir}")
-    print(f"⚙️  Mode: {'STRICT (CI)' if strict_mode else 'Standard (Dev)'}")
-    
+def collect_validation_results(skills_dir, strict_mode=False):
     errors = []
     warnings = []
     skill_count = 0
-    
+
     # Pre-compiled regex
     security_disclaimer_pattern = re.compile(r"AUTHORIZED USE ONLY", re.IGNORECASE)
 
@@ -86,6 +95,9 @@ def validate_skills(skills_dir, strict_mode=False):
         if "SKILL.md" in files:
             skill_count += 1
             skill_path = os.path.join(root, "SKILL.md")
+            if os.path.islink(skill_path):
+                warnings.append(f"⚠️  {os.path.relpath(skill_path, skills_dir)}: Skipping symlinked SKILL.md")
+                continue
             rel_path = os.path.relpath(skill_path, skills_dir)
             
             try:
@@ -97,7 +109,7 @@ def validate_skills(skills_dir, strict_mode=False):
             
             # 1. Frontmatter Check
             metadata, fm_errors = parse_frontmatter(content, rel_path)
-            if not metadata:
+            if metadata is None:
                 errors.append(f"❌ {rel_path}: Missing or malformed YAML frontmatter")
                 continue # Cannot proceed without metadata
             
@@ -170,6 +182,25 @@ def validate_skills(skills_dir, strict_mode=False):
                 target_path = os.path.normpath(os.path.join(root, link_clean))
                 if not os.path.exists(target_path):
                     errors.append(f"❌ {rel_path}: Dangling link detected. Path '{link_clean}' (from '...({link})') does not exist locally.")
+
+    return {
+        "skill_count": skill_count,
+        "warnings": warnings,
+        "errors": errors,
+        "strict_mode": strict_mode,
+    }
+
+
+def validate_skills(skills_dir, strict_mode=False):
+    configure_utf8_output()
+
+    print(f"🔍 Validating skills in: {skills_dir}")
+    print(f"⚙️  Mode: {'STRICT (CI)' if strict_mode else 'Standard (Dev)'}")
+
+    results = collect_validation_results(skills_dir, strict_mode=strict_mode)
+    warnings = results["warnings"]
+    errors = results["errors"]
+    skill_count = results["skill_count"]
 
     # Reporting
     print(f"\n📊 Checked {skill_count} skills.")

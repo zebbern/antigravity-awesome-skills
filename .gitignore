@@ -9,7 +9,12 @@ __pycache__/
 antigravity-awesome-skills-*.tgz
 
 .agent/rules/
+/.claude-plugin/*
+!/.claude-plugin/plugin.json
+!/.claude-plugin/marketplace.json
+.codex/
 .gemini/
+.release-clone-*/
 data/node_modules
 
 # Temporary analysis and report files
@@ -37,3 +42,6 @@ validation-baseline.json
 # Web app generated assets (from npm run app:setup)
 apps/web-app/public/skills/
 apps/web-app/public/skills.json
+
+# Local duplicate/download artifacts
+skills/spline-3d-integration/*.zip

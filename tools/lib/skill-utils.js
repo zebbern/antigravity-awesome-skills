@@ -2,6 +2,24 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('yaml');
 
+function isSafeDirectory(dirPath) {
+  try {
+    const stats = fs.lstatSync(dirPath);
+    return stats.isDirectory() && !stats.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+function isSafeSkillFile(skillPath) {
+  try {
+    const stats = fs.lstatSync(skillPath);
+    return stats.isFile() && !stats.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
 function stripQuotes(value) {
   if (typeof value !== 'string') return value;
   if (value.length < 2) return value.trim();
@@ -119,28 +137,34 @@ function readSkill(skillDir, skillId) {
   if (Array.isArray(data.tags)) {
     tags = data.tags.map(tag => String(tag).trim());
   } else if (typeof data.tags === 'string' && data.tags.trim()) {
-    const parts = data.tags.includes(',')
-      ? data.tags.split(',')
-      : data.tags.split(/\s+/);
+    const inlineTags = parseInlineList(data.tags);
+    const parts = inlineTags.length > 0
+      ? inlineTags
+      : (data.tags.includes(',') ? data.tags.split(',') : data.tags.split(/\s+/));
     tags = parts.map(tag => tag.trim());
   } else if (isPlainObject(data.metadata) && data.metadata.tags) {
     const rawTags = data.metadata.tags;
     if (Array.isArray(rawTags)) {
       tags = rawTags.map(tag => String(tag).trim());
     } else if (typeof rawTags === 'string' && rawTags.trim()) {
-      const parts = rawTags.includes(',')
-        ? rawTags.split(',')
-        : rawTags.split(/\s+/);
+      const inlineTags = parseInlineList(rawTags);
+      const parts = inlineTags.length > 0
+        ? inlineTags
+        : (rawTags.includes(',') ? rawTags.split(',') : rawTags.split(/\s+/));
       tags = parts.map(tag => tag.trim());
     }
   }
 
   tags = tags.filter(Boolean);
+  const category = typeof data.category === 'string' ? data.category.trim() : '';
+  const risk = typeof data.risk === 'string' ? data.risk.trim() : '';
 
   return {
     id: skillId,
     name,
     description,
+    category,
+    risk,
     tags,
     path: skillPath,
     content,
@@ -152,9 +176,9 @@ function listSkillIds(skillsDir) {
     .filter(entry => {
       if (entry.startsWith('.')) return false;
       const dirPath = path.join(skillsDir, entry);
-      if (!fs.statSync(dirPath).isDirectory()) return false;
+      if (!isSafeDirectory(dirPath)) return false;
       const skillPath = path.join(dirPath, 'SKILL.md');
-      return fs.existsSync(skillPath);
+      return isSafeSkillFile(skillPath);
     })
     .sort();
 }
@@ -164,17 +188,28 @@ function listSkillIds(skillsDir) {
  * Matches generate_index.py behavior so catalog includes nested skills (e.g. game-development/2d-games).
  */
 function listSkillIdsRecursive(skillsDir, baseDir = skillsDir, acc = []) {
-  const entries = fs.readdirSync(baseDir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
-    if (!entry.isDirectory()) continue;
-    const dirPath = path.join(baseDir, entry.name);
-    const skillPath = path.join(dirPath, 'SKILL.md');
-    const relPath = path.relative(skillsDir, dirPath);
-    if (fs.existsSync(skillPath)) {
-      acc.push(relPath);
+  const stack = [baseDir];
+  const visited = new Set();
+
+  while (stack.length > 0) {
+    const currentDir = stack.pop();
+    const resolvedDir = path.resolve(currentDir);
+    if (visited.has(resolvedDir)) continue;
+    visited.add(resolvedDir);
+
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const dirPath = path.join(currentDir, entry.name);
+      if (!isSafeDirectory(dirPath)) continue;
+
+      const skillPath = path.join(dirPath, 'SKILL.md');
+      const relPath = path.relative(skillsDir, dirPath);
+      if (isSafeSkillFile(skillPath)) {
+        acc.push(relPath);
+      }
+      stack.push(dirPath);
     }
-    listSkillIdsRecursive(skillsDir, dirPath, acc);
   }
   return acc.sort();
 }

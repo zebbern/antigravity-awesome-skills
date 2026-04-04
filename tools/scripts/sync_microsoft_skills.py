@@ -49,7 +49,13 @@ def cleanup_previous_sync():
         if not flat_name:
             continue
 
-        skill_dir = TARGET_DIR / flat_name
+        sanitized = sanitize_flat_name(flat_name, "")
+        if not sanitized:
+            continue
+
+        skill_dir = TARGET_DIR / sanitized
+        if not is_path_within(TARGET_DIR, skill_dir):
+            continue
         if skill_dir.exists() and skill_dir.is_dir():
             shutil.rmtree(skill_dir)
             removed_count += 1
@@ -60,6 +66,56 @@ def cleanup_previous_sync():
 
 
 import yaml
+
+SAFE_FLAT_NAME_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def is_path_within(base_dir: Path, target_path: Path) -> bool:
+    """Return True when target_path resolves inside base_dir."""
+    try:
+        target_path.resolve().relative_to(base_dir.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def is_safe_regular_file(file_path: Path, source_root: Path) -> bool:
+    try:
+        if file_path.is_symlink():
+            return False
+        if not file_path.is_file():
+            return False
+        return is_path_within(source_root, file_path.resolve())
+    except OSError:
+        return False
+
+
+def sanitize_flat_name(candidate: str | None, fallback: str) -> str:
+    """Accept only flat skill directory names; fall back on unsafe values."""
+    if not candidate:
+        return fallback
+
+    stripped = candidate.strip()
+    parts = Path(stripped).parts
+    if (
+        not stripped
+        or Path(stripped).is_absolute()
+        or any(part in ("..", ".") for part in parts)
+        or "/" in stripped
+        or "\\" in stripped
+    ):
+        return fallback
+
+    sanitized = SAFE_FLAT_NAME_PATTERN.sub("-", stripped).strip("-.")
+    return sanitized or fallback
+
+
+def copy_safe_skill_files(source_dir: Path, target_dir: Path, source_root: Path):
+    """Copy regular files only when their resolved path stays inside source_root."""
+    for file_item in source_dir.iterdir():
+        if file_item.name == "SKILL.md" or not is_safe_regular_file(file_item, source_root):
+            continue
+        shutil.copy2(file_item.resolve(), target_dir / file_item.name)
 
 def extract_skill_name(skill_md_path: Path) -> str | None:
     """Extract the 'name' field from SKILL.md YAML frontmatter using PyYAML."""
@@ -95,6 +151,7 @@ def find_skills_in_directory(source_dir: Path):
     Returns list of dicts: {relative_path, skill_md_path, source_dir}.
     """
     skills_source = source_dir / "skills"
+    source_root = source_dir.resolve()
     results = []
 
     if not skills_source.exists():
@@ -110,6 +167,8 @@ def find_skills_in_directory(source_dir: Path):
         if item.is_symlink():
             try:
                 resolved = item.resolve()
+                if not is_path_within(source_root, resolved):
+                    continue
                 if (resolved / "SKILL.md").exists():
                     skill_md = resolved / "SKILL.md"
                     actual_dir = resolved
@@ -148,6 +207,9 @@ def find_plugin_skills(source_dir: Path, already_synced_names: set):
         skill_dir = skill_file.parent
         skill_name = skill_dir.name
 
+        if not is_safe_regular_file(skill_file, source_dir):
+            continue
+
         if skill_name not in already_synced_names:
             results.append({
                 "relative_path": Path("plugins") / skill_name,
@@ -167,13 +229,17 @@ def find_github_skills(source_dir: Path, already_synced_names: set):
         return results
 
     for skill_dir in github_skills.iterdir():
-        if not skill_dir.is_dir() or not (skill_dir / "SKILL.md").exists():
+        if skill_dir.is_symlink() or not skill_dir.is_dir():
+            continue
+
+        skill_md = skill_dir / "SKILL.md"
+        if not is_safe_regular_file(skill_md, source_dir):
             continue
 
         if skill_dir.name not in already_synced_names:
             results.append({
                 "relative_path": Path(".github/skills") / skill_dir.name,
-                "skill_md": skill_dir / "SKILL.md",
+                "skill_md": skill_md,
                 "source_dir": skill_dir,
             })
 
@@ -207,10 +273,11 @@ def sync_skills_flat(source_dir: Path, target_dir: Path):
     used_names: dict[str, str] = {}
 
     for entry in all_skill_entries:
-        skill_name = extract_skill_name(entry["skill_md"])
+        fallback_name = generate_fallback_name(entry["relative_path"])
+        skill_name = sanitize_flat_name(
+            extract_skill_name(entry["skill_md"]), fallback_name)
 
-        if not skill_name:
-            skill_name = generate_fallback_name(entry["relative_path"])
+        if skill_name == fallback_name:
             print(
                 f"  ⚠️  No frontmatter name for {entry['relative_path']}, using fallback: {skill_name}")
 
@@ -241,9 +308,7 @@ def sync_skills_flat(source_dir: Path, target_dir: Path):
         shutil.copy2(entry["skill_md"], target_skill_dir / "SKILL.md")
 
         # Copy other files from the skill directory
-        for file_item in entry["source_dir"].iterdir():
-            if file_item.name != "SKILL.md" and file_item.is_file():
-                shutil.copy2(file_item, target_skill_dir / file_item.name)
+        copy_safe_skill_files(entry["source_dir"], target_skill_dir, source_dir)
 
         skill_metadata.append({
             "flat_name": skill_name,
@@ -265,9 +330,8 @@ def sync_skills_flat(source_dir: Path, target_dir: Path):
     if plugin_entries:
         print(f"\n  📦 Found {len(plugin_entries)} additional plugin skills")
         for entry in plugin_entries:
-            skill_name = extract_skill_name(entry["skill_md"])
-            if not skill_name:
-                skill_name = entry["source_dir"].name
+            skill_name = sanitize_flat_name(
+                extract_skill_name(entry["skill_md"]), entry["source_dir"].name)
 
             if skill_name in synced_names:
                 skill_name = f"{skill_name}-plugin"
@@ -288,9 +352,7 @@ def sync_skills_flat(source_dir: Path, target_dir: Path):
 
             shutil.copy2(entry["skill_md"], target_skill_dir / "SKILL.md")
 
-            for file_item in entry["source_dir"].iterdir():
-                if file_item.name != "SKILL.md" and file_item.is_file():
-                    shutil.copy2(file_item, target_skill_dir / file_item.name)
+            copy_safe_skill_files(entry["source_dir"], target_skill_dir, source_dir)
 
             skill_metadata.append({
                 "flat_name": skill_name,
@@ -309,9 +371,8 @@ def sync_skills_flat(source_dir: Path, target_dir: Path):
         print(
             f"\n  � Found {len(github_skill_entries)} skills in .github/skills/ not linked from skills/")
         for entry in github_skill_entries:
-            skill_name = extract_skill_name(entry["skill_md"])
-            if not skill_name:
-                skill_name = entry["source_dir"].name
+            skill_name = sanitize_flat_name(
+                extract_skill_name(entry["skill_md"]), entry["source_dir"].name)
 
             if skill_name in synced_names:
                 skill_name = f"{skill_name}-github"
@@ -331,9 +392,7 @@ def sync_skills_flat(source_dir: Path, target_dir: Path):
 
             shutil.copy2(entry["skill_md"], target_skill_dir / "SKILL.md")
 
-            for file_item in entry["source_dir"].iterdir():
-                if file_item.name != "SKILL.md" and file_item.is_file():
-                    shutil.copy2(file_item, target_skill_dir / file_item.name)
+            copy_safe_skill_files(entry["source_dir"], target_skill_dir, source_dir)
 
             skill_metadata.append({
                 "flat_name": skill_name,

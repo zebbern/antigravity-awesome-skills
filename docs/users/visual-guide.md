@@ -25,7 +25,7 @@
 
 ---
 
-## 📦 Repository Structure (Visual)
+## Repository Structure (Visual)
 
 ```
 antigravity-awesome-skills/
@@ -34,7 +34,7 @@ antigravity-awesome-skills/
 ├── 📄 CONTRIBUTING.md                  ← Contributor workflow
 ├── 📄 CATALOG.md                       ← Full generated catalog
 │
-├── 📁 skills/                          ← 1,204+ skills live here
+├── 📁 skills/                          ← 1,372+ skills live here
 │   │
 │   ├── 📁 brainstorming/
 │   │   └── 📄 SKILL.md                 ← Skill definition
@@ -47,7 +47,7 @@ antigravity-awesome-skills/
 │   │   └── 📁 2d-games/
 │   │       └── 📄 SKILL.md             ← Nested skills also supported
 │   │
-│   └── ... (1,200+ total)
+│   └── ... (1,372+ total)
 │
 ├── 📁 apps/
 │   └── 📁 web-app/                     ← Interactive browser
@@ -70,7 +70,7 @@ antigravity-awesome-skills/
 
 ```
 ┌──────────────┐
-│ 1. INSTALL   │  Copy skills to .agent/skills/
+│ 1. INSTALL   │  Run npx installer or clone to your tool path
 └──────┬───────┘
        │
        ↓
@@ -96,11 +96,11 @@ antigravity-awesome-skills/
 
 ---
 
-## 🎯 Skill Categories (Visual Map)
+## Skill Categories (Visual Map)
 
 ```
                     ┌─────────────────────────┐
-                    │  1,204+ SKILLS          │
+                    │  1,372+ SKILLS          │
                     └────────────┬────────────┘
                                  │
         ┌────────────────────────┼────────────────────────┐
@@ -178,31 +178,30 @@ antigravity-awesome-skills/
 
 ## Installation (Visual Steps)
 
-### Step 1: Clone the Repository
+### Step 1: Install the Repository
 ```
 ┌─────────────────────────────────────────┐
 │ Terminal                                │
 ├─────────────────────────────────────────┤
-│ $ git clone https://github.com/        │
-│   sickn33/antigravity-awesome-skills    │
-│   .agent/skills                         │
+│ $ npx antigravity-awesome-skills        │
 │                                         │
-│ ✓ Cloning into '.agent/skills'...      │
-│ ✓ Done!                                 │
+│ ✓ Installing to                         │
+│   ~/.gemini/antigravity/skills/         │
 └─────────────────────────────────────────┘
 ```
+
+If you want a workspace-style manual install instead, cloning into `.agent/skills/` is still a valid custom path for Antigravity.
 
 ### Step 2: Verify Installation
 ```
 ┌─────────────────────────────────────────┐
 │ File Explorer                           │
 ├─────────────────────────────────────────┤
-│ 📁 .agent/                              │
-│   └── 📁 skills/                        │
-│       ├── 📁 brainstorming/             │
-│       ├── 📁 stripe-integration/        │
-│       ├── 📁 react-best-practices/      │
-│       └── ... (1,200+ total)            │
+│ 📁 ~/.gemini/antigravity/skills/        │
+│   ├── 📁 brainstorming/                 │
+│   ├── 📁 stripe-integration/            │
+│   ├── 📁 react-best-practices/          │
+│   └── ... (1,372+ total)                │
 └─────────────────────────────────────────┘
 ```
 
@@ -311,7 +310,7 @@ Open skills_index.json → Search for keyword → Find skill path
        │
        ↓
 ┌──────────────┐
-│ 4. TEST      │  Copy to .agent/skills/
+│ 4. TEST      │  Copy to your tool's installed skills path
 └──────┬───────┘  Try: @docker-mastery
        │
        ↓
@@ -351,7 +350,7 @@ Open skills_index.json → Search for keyword → Find skill path
 
 ---
 
-## 🎯 Contribution Impact (Visual)
+## Contribution Impact (Visual)
 
 ```
 Your Contribution
@@ -427,7 +426,7 @@ START HERE
 
 ---
 
-## 💡 Quick Tips (Visual Cheatsheet)
+## Quick Tips (Visual Cheatsheet)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -435,7 +434,7 @@ START HERE
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  📥 INSTALL                                                 │
-│  git clone [repo] .agent/skills                             │
+│  npx antigravity-awesome-skills                             │
 │                                                             │
 │  🎯 USE                                                     │
 │  @skill-name [your request]                                 │
@@ -455,6 +454,7 @@ START HERE
 │                                                             │
 │  🆘 HELP                                                    │
 │  • docs/users/getting-started.md                            │
+│  • docs/users/faq.md                                        │
 │  • CONTRIBUTING.md                                          │
 │  • docs/contributors/skill-anatomy.md                       │
 │  • GitHub Issues - Ask questions                            │

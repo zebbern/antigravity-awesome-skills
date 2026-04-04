@@ -24,7 +24,7 @@ The following skills were added from the curated collection at [VoltAgent/awesom
 | :------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ | :--------- | :--------------------------------- |
 | `vercel-deploy-claimable`                                                                    | [Vercel Labs](https://github.com/vercel-labs/agent-skills)                | MIT        | Official Vercel skill              |
 | `design-md`                                                                                  | [Google Labs (Stitch)](https://github.com/google-labs-code/stitch-skills) | Compatible | Google Labs Stitch skills          |
-| `hugging-face-cli`, `hugging-face-jobs`                                                      | [Hugging Face](https://github.com/huggingface/skills)                     | Compatible | Official Hugging Face skills       |
+| `hugging-face-cli`, `hugging-face-community-evals`, `hugging-face-dataset-viewer`, `hugging-face-gradio`, `hugging-face-jobs`, `hugging-face-model-trainer`, `hugging-face-paper-publisher`, `hugging-face-papers`, `hugging-face-trackio`, `hugging-face-vision-trainer`, `transformers-js` | [Hugging Face](https://github.com/huggingface/skills) | Compatible | Official Hugging Face skills |
 | `culture-index`, `fix-review`, `sharp-edges`                                                 | [Trail of Bits](https://github.com/trailofbits/skills)                    | Compatible | Security skills from Trail of Bits |
 | `expo-deployment`, `upgrading-expo`                                                          | [Expo](https://github.com/expo/skills)                                    | Compatible | Official Expo skills               |
 | `commit`, `create-pr`, `find-bugs`, `iterate-pr`                                             | [Sentry](https://github.com/getsentry/skills)                             | Compatible | Sentry dev team skills             |
@@ -80,6 +80,16 @@ The following skills were added from the curated collection at [VoltAgent/awesom
 | `fp-ts-react`     | [whatiskadudoing/fp-ts-skills](https://github.com/whatiskadudoing/fp-ts-skills) | Compatible | fp-ts with React 18/19 and Next.js                       |
 | `fp-ts-errors`    | [whatiskadudoing/fp-ts-skills](https://github.com/whatiskadudoing/fp-ts-skills) | Compatible | Type-safe error handling with Either and TaskEither      |
 
+## Skills from Dimillian/Skills
+
+The following skills were added from [Dimillian/Skills](https://github.com/Dimillian/Skills), a curated Codex skills repository focused on Apple platforms, GitHub workflows, refactoring, and performance work.
+
+| Skill / Group | Original Source | License | Notes |
+| :------------ | :-------------- | :------ | :---- |
+| `app-store-changelog`, `github`, `orchestrate-batch-refactor`, `project-skill-audit`, `react-component-performance`, `simplify-code` | [Dimillian/Skills](https://github.com/Dimillian/Skills) | MIT | Workflow, GitHub, React performance, and code simplification skills. |
+| `ios-debugger-agent`, `macos-menubar-tuist-app`, `macos-spm-app-packaging`, `swift-concurrency-expert` | [Dimillian/Skills](https://github.com/Dimillian/Skills) | MIT | Apple-platform debugging, packaging, and Swift concurrency guidance. |
+| `swiftui-liquid-glass`, `swiftui-performance-audit`, `swiftui-ui-patterns`, `swiftui-view-refactor` | [Dimillian/Skills](https://github.com/Dimillian/Skills) | MIT | SwiftUI-specific implementation, performance, and refactoring patterns. |
+
 ---
 
 ## Recently Added Skills (March 2026)
@@ -108,7 +118,7 @@ The following skills were added during the March 2026 skills update:
 ### Machine Learning & Data
 | Skill | Source | License | Notes |
 |-------|--------|---------|-------|
-| `hugging-face-dataset-viewer`, `hugging-face-datasets`, `hugging-face-evaluation`, `hugging-face-model-trainer`, `hugging-face-paper-publisher`, `hugging-face-tool-builder` | [huggingface/skills](https://github.com/huggingface/skills) | Compatible | HuggingFace ML tools |
+| `hugging-face-datasets`, `hugging-face-evaluation`, `hugging-face-tool-builder` | [huggingface/skills](https://github.com/huggingface/skills) | Compatible | Hugging Face ecosystem extensions |
 | `numpy`, `pandas`, `scipy`, `matplotlib`, `scikit-learn`, `jupyter-workflow` | [K-Dense-AI/claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) | Compatible | Data science essentials |
 | `biopython`, `scanpy`, `uniprot-database`, `pubmed-database` | [K-Dense-AI/claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) | Compatible | Bioinformatics tools |
 

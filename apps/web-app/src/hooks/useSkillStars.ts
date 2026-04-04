@@ -1,32 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
 
-const STORAGE_KEY = 'user_stars';
+const STORAGE_KEY = 'saved_skills';
+const LEGACY_STORAGE_KEY = 'user_stars';
 
 interface UserStars {
   [skillId: string]: boolean;
 }
 
 interface UseSkillStarsReturn {
-  starCount: number;
-  hasStarred: boolean;
-  handleStarClick: () => Promise<void>;
-  isLoading: boolean;
+  hasSaved: boolean;
+  handleSaveClick: () => Promise<void>;
+  isSaving: boolean;
 }
 
 /**
  * Safely parse localStorage data with error handling
  */
-function getUserStarsFromStorage(): UserStars {
+function parseStoredStars(storageKey: string): UserStars {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(storageKey);
     if (!stored) return {};
     const parsed = JSON.parse(stored);
     return typeof parsed === 'object' && parsed !== null ? parsed : {};
   } catch (error) {
-    console.warn('Failed to parse user_stars from localStorage:', error);
+    console.warn(`Failed to parse ${storageKey} from localStorage:`, error);
     return {};
   }
+}
+
+function getUserStarsFromStorage(): UserStars {
+  return {
+    ...parseStoredStars(LEGACY_STORAGE_KEY),
+    ...parseStoredStars(STORAGE_KEY),
+  };
 }
 
 /**
@@ -36,127 +42,53 @@ function saveUserStarsToStorage(stars: UserStars): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stars));
   } catch (error) {
-    console.warn('Failed to save user_stars to localStorage:', error);
+    console.warn(`Failed to save ${STORAGE_KEY} to localStorage:`, error);
   }
 }
 
 /**
- * Hook to manage skill starring functionality
- * Handles localStorage persistence, optimistic UI updates, and Supabase sync
+ * Hook to manage local skill saves in the browser.
  */
 export function useSkillStars(skillId: string | undefined): UseSkillStarsReturn {
-  const [starCount, setStarCount] = useState<number>(0);
-  const [hasStarred, setHasStarred] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasSaved, setHasSaved] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Initialize star count from Supabase and check if user has starred
   useEffect(() => {
-    if (!skillId) return;
+    if (!skillId) {
+      setHasSaved(false);
+      return;
+    }
 
-    const initializeStars = async () => {
-      // Check localStorage for user's starred status
-      const userStars = getUserStarsFromStorage();
-      setHasStarred(!!userStars[skillId]);
-
-      // Fetch star count from Supabase if available
-      if (supabase) {
-        try {
-          const { data, error } = await supabase
-            .from('skill_stars')
-            .select('star_count')
-            .eq('skill_id', skillId)
-            .single();
-
-          if (!error && data) {
-            setStarCount(data.star_count);
-          }
-        } catch (err) {
-          console.warn('Failed to fetch star count:', err);
-        }
-      }
-    };
-
-    initializeStars();
+    const userStars = getUserStarsFromStorage();
+    setHasSaved(!!userStars[skillId]);
   }, [skillId]);
 
   /**
-   * Handle star button click
-   * Prevents double-starring, updates optimistically, syncs to Supabase
+   * Save a skill locally in this browser without pretending to update shared metrics.
    */
-  const handleStarClick = useCallback(async () => {
-    if (!skillId || isLoading) return;
+  const handleSaveClick = useCallback(async () => {
+    if (!skillId || isSaving) return;
 
-    // Check if user has already starred (prevent spam)
     const userStars = getUserStarsFromStorage();
     if (userStars[skillId]) return;
 
-    setIsLoading(true);
+    setIsSaving(true);
+    setHasSaved(true);
 
     try {
-      // Optimistically update UI
-      setStarCount(prev => prev + 1);
-      setHasStarred(true);
-
-      // Persist to localStorage
       const updatedStars = { ...userStars, [skillId]: true };
       saveUserStarsToStorage(updatedStars);
-
-      // Sync to Supabase if available
-      if (supabase) {
-        const { data: existingData, error: fetchError } = await supabase
-          .from('skill_stars')
-          .select('star_count')
-          .eq('skill_id', skillId)
-          .single();
-
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          // PGRST116 = not found, which is expected for new skills
-          console.warn('Failed to fetch existing star count:', fetchError);
-        }
-
-        if (existingData) {
-          // Update existing record
-          const { error: updateError } = await supabase
-            .from('skill_stars')
-            .update({ star_count: existingData.star_count + 1 })
-            .eq('skill_id', skillId);
-
-          if (updateError) {
-            console.warn('Failed to update star count:', updateError);
-          }
-        } else {
-          // Insert new record
-          const { error: insertError } = await supabase
-            .from('skill_stars')
-            .insert({ skill_id: skillId, star_count: 1 });
-
-          if (insertError) {
-            console.warn('Failed to insert star count:', insertError);
-          }
-        }
-      }
     } catch (error) {
-      // Rollback optimistic update on error
-      console.error('Failed to star skill:', error);
-      setStarCount(prev => Math.max(0, prev - 1));
-      setHasStarred(false);
-
-      // Remove from localStorage on error
-      const userStars = getUserStarsFromStorage();
-      if (userStars[skillId]) {
-        const { [skillId]: _, ...rest } = userStars;
-        saveUserStarsToStorage(rest);
-      }
+      console.error('Failed to save skill locally:', error);
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
-  }, [skillId, isLoading]);
+  }, [skillId, isSaving]);
 
   return {
-    starCount,
-    hasStarred,
-    handleStarClick,
-    isLoading
+    hasSaved,
+    handleSaveClick,
+    isSaving
   };
 }
 

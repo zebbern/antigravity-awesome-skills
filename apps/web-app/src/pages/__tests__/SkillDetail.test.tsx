@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { SkillDetail } from '../SkillDetail';
 import { renderWithRouter } from '../../utils/testUtils';
 import { createMockSkill } from '../../factories/skill';
@@ -7,9 +7,9 @@ import { useSkills } from '../../context/SkillContext';
 
 // Mock the SkillStarButton component
 vi.mock('../../components/SkillStarButton', () => ({
-  SkillStarButton: ({ skillId, initialCount }: { skillId: string; initialCount?: number }) => (
-    <button data-testid="star-button" data-skill-id={skillId} data-count={initialCount}>
-      {initialCount || 0} Upvotes
+  SkillStarButton: ({ skillId, communityCount }: { skillId: string; communityCount?: number }) => (
+    <button data-testid="star-button" data-skill-id={skillId} data-community-count={communityCount}>
+      Save locally
     </button>
   ),
 }));
@@ -32,6 +32,7 @@ describe('SkillDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    window.history.pushState({}, '', '/');
   });
 
   describe('Loading state', () => {
@@ -104,6 +105,109 @@ describe('SkillDetail', () => {
         expect(screen.getByText('@react-patterns')).toBeInTheDocument();
         expect(screen.getByText('React design patterns and best practices')).toBeInTheDocument();
         expect(screen.getByTestId('markdown-content')).toHaveTextContent('This is the skill content.');
+        expect(document.title).toContain('react-patterns');
+        expect(document.querySelector('meta[name="twitter:title"]')).toHaveAttribute(
+          'content',
+          '@react-patterns | Antigravity Awesome Skills',
+        );
+        expect(global.fetch).toHaveBeenCalled();
+      }, { timeout: 3000 });
+    });
+
+    it('falls back to the next markdown candidate when the first response is html', async () => {
+      const mockSkill = createMockSkill({
+        id: 'fallback-skill',
+        name: 'fallback-skill',
+      });
+
+      (useSkills as Mock).mockReturnValue({
+        skills: [mockSkill],
+        stars: {},
+        loading: false,
+      });
+
+      window.history.pushState({}, '', '/skill/fallback-skill');
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () => '<!doctype html><html></html>',
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () => '# Loaded from fallback',
+        });
+
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/fallback-skill',
+        path: '/skill/:id',
+        useProvider: false
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('markdown-content')).toHaveTextContent('Loaded from fallback');
+      });
+    });
+
+    it('shows a retry action when markdown loading fails', async () => {
+      const mockSkill = createMockSkill({
+        id: 'broken-skill',
+        name: 'broken-skill',
+      });
+
+      (useSkills as Mock).mockReturnValue({
+        skills: [mockSkill],
+        stars: {},
+        loading: false,
+      });
+
+      window.history.pushState({}, '', '/skill/broken-skill');
+
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          text: async () => '',
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          text: async () => '',
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          text: async () => '',
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          text: async () => '',
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          text: async () => '',
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () => '# Recovered content',
+        });
+
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/broken-skill',
+        path: '/skill/:id',
+        useProvider: false
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/Failed to Load Content/i)).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Retry loading content/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('markdown-content')).toHaveTextContent('Recovered content');
       });
     });
 
@@ -123,6 +227,7 @@ describe('SkillDetail', () => {
       await waitFor(() => {
         expect(screen.getByText(/Error Loading Skill/i)).toBeInTheDocument();
         expect(screen.getByText(/Skill not found in registry/i)).toBeInTheDocument();
+        expect(document.title).toContain('nonexistent');
       });
     });
   });
@@ -157,6 +262,43 @@ describe('SkillDetail', () => {
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Use @click-test');
     });
+
+    it('should copy install command when copy command CTA is clicked', async () => {
+      const mockSkill = createMockSkill({ id: 'click-install', name: 'click-install' });
+
+      (useSkills as Mock).mockReturnValue({
+        skills: [mockSkill],
+        stars: {},
+        loading: false,
+      });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => 'Content',
+      });
+
+      renderWithRouter(<SkillDetail />, {
+        route: '/skill/click-install',
+        path: '/skill/:id',
+        useProvider: false,
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Copy command/i })).toBeInTheDocument();
+      });
+
+      vi.useFakeTimers();
+      try {
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: /Copy command/i }));
+          await vi.runAllTimersAsync();
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('npx antigravity-awesome-skills');
+    });
   });
 
   describe('Star button integration', () => {
@@ -183,7 +325,7 @@ describe('SkillDetail', () => {
       await waitFor(() => {
         const starBtn = screen.getByTestId('star-button');
         expect(starBtn).toBeInTheDocument();
-        expect(starBtn).toHaveAttribute('data-count', '10');
+        expect(starBtn).toHaveAttribute('data-community-count', '10');
       });
     });
   });
